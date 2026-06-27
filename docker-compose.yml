@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ventanilla
+      POSTGRES_PASSWORD: ventanilla
+      POSTGRES_DB: ventanilla
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://ventanilla:ventanilla@db:5432/ventanilla
+      JWT_SECRET_KEY: cambia-esta-clave-en-produccion
+      CORS_ORIGINS: http://localhost:80
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+volumes:
+  db_data:

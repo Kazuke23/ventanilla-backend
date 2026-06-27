@@ -16,6 +16,11 @@ class Usuario(db.Model):
     codigo = db.Column(db.String(30), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     rol = db.Column(db.String(20), nullable=False)  # 'estudiante' | 'funcionario'
+    area_id = db.Column(
+    db.Integer,
+    db.ForeignKey("area.id"),
+    nullable=True
+)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     solicitudes = db.relationship("Solicitud", backref="usuario", lazy=True)
@@ -30,6 +35,24 @@ class Usuario(db.Model):
         }
 
 
+class Area(db.Model):
+    __tablename__ = "area"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre = db.Column(db.String(120), unique=True, nullable=False)
+    correo = db.Column(db.String(150), nullable=True)
+
+    tipos = db.relationship("TipoSolicitud", backref="area", lazy=True)
+    funcionarios = db.relationship("Usuario", backref="area", lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "correo": self.correo,
+        }
+
+
 class TipoSolicitud(db.Model):
     __tablename__ = "tipo_solicitud"
 
@@ -37,6 +60,13 @@ class TipoSolicitud(db.Model):
     nombre = db.Column(db.String(120), nullable=False)
     descripcion = db.Column(db.Text)
     dias_respuesta = db.Column(db.Integer, default=5)
+    
+    area_id = db.Column(
+    db.Integer,
+    db.ForeignKey("area.id"),
+    nullable=False
+)
+    
 
     def to_dict(self):
         return {
@@ -44,6 +74,8 @@ class TipoSolicitud(db.Model):
             "nombre": self.nombre,
             "descripcion": self.descripcion,
             "dias_respuesta": self.dias_respuesta,
+            "area_id": self.area_id,
+            "area_nombre": self.area.nombre if self.area else None,
         }
 
 
