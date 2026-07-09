@@ -3,7 +3,7 @@ import uuid
 from flask import Blueprint, request, jsonify, send_file, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.extensions import db
-from app.models import Solicitud, TipoSolicitud
+from app.models import Solicitud, TipoSolicitud, Usuario
 from app.core.security import requiere_rol
 from app.services.email_service import enviar_notificacion_estado
 from app.services.pdf_service import generar_pdf_comprobante
@@ -20,11 +20,23 @@ def listar_solicitudes():
     usuario_id = get_jwt_identity()
     estado = request.args.get("estado")
 
-    query = Solicitud.query
     if claims.get("rol") == "estudiante":
-        query = query.filter_by(usuario_id=usuario_id)
+        query = Solicitud.query.filter_by(usuario_id=usuario_id)
+
+    elif claims.get("rol") == "funcionario":
+        funcionario = db.session.get(Usuario, usuario_id)
+        if not funcionario or not funcionario.area_id:
+            return jsonify({"error": "El funcionario no tiene un área asignada"}), 400
+        query = (
+            Solicitud.query
+            .join(TipoSolicitud, Solicitud.tipo_id == TipoSolicitud.id)
+            .filter(TipoSolicitud.area_id == funcionario.area_id)
+        )
+    else:
+        return jsonify({"error": "Rol no reconocido"}), 403
+
     if estado:
-        query = query.filter_by(estado=estado)
+        query = query.filter(Solicitud.estado == estado)
 
     solicitudes = query.order_by(Solicitud.created_at.desc()).all()
     return jsonify([s.to_dict() for s in solicitudes])
