@@ -94,6 +94,7 @@ def detalle_solicitud(solicitud_id):
 @jwt_required()
 @requiere_rol("funcionario")
 def cambiar_estado(solicitud_id):
+    usuario_id = get_jwt_identity()
     data = request.get_json() or {}
     nuevo_estado = data.get("estado")
     respuesta = data.get("respuesta")
@@ -104,6 +105,15 @@ def cambiar_estado(solicitud_id):
         return jsonify({"error": "El campo respuesta es obligatorio al rechazar"}), 400
 
     solicitud = Solicitud.query.get_or_404(solicitud_id)
+
+    funcionario = db.session.get(Usuario, usuario_id)
+    if not funcionario or not funcionario.area_id:
+        return jsonify({"error": "El funcionario no tiene un área asignada"}), 400
+
+    tipo_solicitud = db.session.get(TipoSolicitud, solicitud.tipo_id)
+    if not tipo_solicitud or tipo_solicitud.area_id != funcionario.area_id:
+        return jsonify({"error": "No puedes modificar solicitudes de otra área"}), 403
+
     solicitud.estado = nuevo_estado
     if respuesta:
         solicitud.respuesta = respuesta

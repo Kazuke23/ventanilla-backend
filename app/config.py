@@ -1,5 +1,8 @@
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Config:
@@ -16,8 +19,11 @@ class Config:
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
     MAIL_USE_TLS = True
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
 
-    UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", "uploads")
-    PDF_FOLDER = os.environ.get("PDF_FOLDER", "pdfs")
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+    UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", os.path.join(BASE_DIR, "uploads"))
+    PDF_FOLDER = os.environ.get("PDF_FOLDER", os.path.join(BASE_DIR, "pdfs"))
 
     CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:4200")
